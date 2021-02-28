@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf8">
+  <title>Mutiple</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      font-family: monospace;
+    }
+
+    canvas {
+      float: left;
+      display: block;
+      width: 90vw;
+      height: 100vh;
+
+    }
+
+    input {
+      margin-top: 5px;
+
+      outline-style: none;
+      border-style: none;
+      background-color: rgba(0, 0, 0, 0);
+    }
+
+    .component {
+      position: absolute;
+      z-index: 2;
+    }
+
+    .mybutton {
+
+
+      text-align: center;
+      color: white;
+      cursor: default;
+      padding: 10px;
+
+      border-radius: 10px;
+
+    }
+
+    .mybutton:hover {
+      box-shadow: 0px 0px 25px rgba(255, 255, 255, 0.473) inset;
+      background-color: rgba(255, 255, 255, 0.212);
+    }
+
+    #begin {
+      width: 10%;
+      height: 7%;
+      top: 42%;
+      left: 38%;
+
+      font-size: 40px;
+    }
+
+    #rechoose {
+      top: 10px;
+      left: 10px;
+      border-radius: 5px;
+    }
+
+
+    #Attribute {
+      color: white;
+      background-color: rgba(255, 255, 255, 0.212);
+      right: 3%;
+      top: 8%;
+      width: 18%;
+      max-width: 200px;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    /* .colorinput {
+       opacity: 0; 
+    } */
+
+    .position {
+      width: 4em;
+      height: 18px;
+      /* border-width: 2px;
+      border-style: solid;
+      border: rgb(255, 255, 255); */
+      box-shadow: 0px 0px 1px white inset;
+      color: white;
+    }
+
+    .Unitbox {
+      margin-top: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="mybutton component" id="rechoose" style="visibility: hidden;">Rechoose</div>
+
+  <div class="mybutton component" id="begin">
+    Begin
+  </div>
+
+
+  <div class=" component">
+    <input style="visibility: hidden;" type="file" id="file" multiple>
+  </div>
+
+  <div class="component" id="Attribute">
+    <div id="colorbox">
+
+      <h3>光源属性：</h3>
+      <div class="Unitbox">
+
+        <label for="ambientLight">
+          环境光：
+          <input class="colorinput" type="color" id="ambientLight" value="#ffffff">
+          <br>
+          强度：
+          <input id="ambientLightFactor" type="range" slider-vertical max="1" min="0" step="0.01" value="0.2">
+        </label>
+      </div>
+
+      <div class="Unitbox">
+        <label for="pointLight">
+          点光源：
+          <input class="colorinput" type="color" id="pointLight" value="#ffffff">
+          <br>
+          强度：
+          <input id="pointLightFactor" type="range" max="1" min="0" step="0.01" value="0.8">
+        </label>
+      </div>
+
+      <div class="Unitbox">点光源位置：<br>
+        <input class="position" type="number" id="lightx" placeholder="x" value="100">
+        <input class="position" type="number" id="lighty" placeholder="y" value="100">
+        <input class="position" type="number" id="lightz" placeholder="z" value="300">
+      </div>
+
+    </div>
+
+
+    <div style="margin-top: 40px;" id="materialbox">
+      <h3>材质属性：</h3>
+
+      <div class="Unitbox">
+        细腻程度：
+        <input id="shininess" type="range" max="2000" min="1" value="100">
+      </div>
+
+      <div class="Unitbox">
+        <label for="ambientcolor">
+          环境光反射：
+          <input class="colorinput" type="color" id="ambientcolor" value="#ffffff">
+          <br>强度：
+          <input id="ambientcolorFactor" type="range" max="1" min="0" step="0.01">
+        </label>
+      </div>
+
+      <div class="Unitbox">
+        <label for="specularcolor">
+          镜面反射：
+          <input class="colorinput" type="color" id="specularcolor" value="#ffffff">
+          <br>强度：
+          <input id="specularcolorFactor" type="range" max="1" min="0" step="0.01">
+        </label>
+      </div>
+
+      <div class="Unitbox">
+        <label>
+          漫反射：
+          <input id="customDiffuse" type="checkbox">
+          <div id="customDiffuseInput" style="display: inline;visibility: hidden;">
+            <input class="colorinput" type="color" id="diffusecolor" value="#ffffff">
+            <br>强度：
+            <input id="diffusecolorFactor" type="range" max="1" min="0" step="0.01">
+          </div>
+
+        </label>
+      </div>
+    </div>
+
+  </div>
+
+  <canvas id="c"></canvas>
+</body>
+
+
+<script id="vs" type="notjs">
+  uniform mat4 u_worldViewProjection;
+uniform vec3 u_lightWorldPos;
+uniform mat4 u_world;
+uniform mat4 u_viewInverse;
+uniform mat4 u_worldInverseTranspose;
+
+attribute vec4 position;
+attribute vec3 normal;
+attribute vec2 texcoord;
+
+varying vec4 v_position;
+varying vec2 v_texCoord;
+varying vec3 v_normal;
+varying vec3 v_surfaceToLight;
+varying vec3 v_surfaceToView;
+
+void main() {
+  v_texCoord = texcoord;
+  v_position = u_worldViewProjection * position;
+  v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
+  v_surfaceToLight = u_lightWorldPos - (u_world * position).xyz;
+  v_surfaceToView = (u_viewInverse[3] - (u_world * position)).xyz;
+  gl_Position = v_position;
+}
+  </script>
+<script id="fs" type="notjs">
+  precision mediump float;
+  //位置信息
+  varying vec4 v_position;
+  varying vec2 v_texCoord;
+  varying vec3 v_normal;
+  varying vec3 v_surfaceToLight;
+  varying vec3 v_surfaceToView;
+
+  //光源信息
+  uniform vec4 u_pointLightColor;
+  uniform vec4 u_ambientLightColor;
+  uniform vec2 u_lightFactor;
+
+  //材质信息
+  uniform vec4 u_ambient;
+  uniform sampler2D u_diffuse;
+  uniform vec4 u_mydiffuse;
+  uniform vec4 u_specular;
+  uniform float u_shininess;
+  uniform vec3 u_reflectFactor;
+
+  uniform bool u_customdiffuse;
+
+
+
+void main() {
+  //光点向量和半向量
+  vec3 surfaceToLight = normalize(v_surfaceToLight);
+  vec3 surfaceToView = normalize(v_surfaceToView);
+  vec3 halfVector = normalize(surfaceToLight + surfaceToView); //半角向量
+  
+  //法向量
+  vec3 a_normal = normalize(v_normal);
+
+  //计算乘以因子之后的光源色和反射光色
+  vec4 ambientLight = u_lightFactor.x * u_ambientLightColor;
+  vec4 pointLight = u_pointLightColor * u_lightFactor.y ;
+
+  vec4 ambient =(u_ambient*u_reflectFactor.x );
+  vec4 specular = u_specular * u_reflectFactor.z;
+
+  vec4 diffuse;
+  if(u_customdiffuse){
+    diffuse = u_mydiffuse*u_reflectFactor.y;
+  }else{
+    diffuse = texture2D(u_diffuse,v_texCoord);
+  }
+
+  //环境反射光
+  vec4 ambientColor =ambientLight * ambient;
+  //漫反射光
+  vec4 diffuseColor = diffuse*pointLight*max(dot(a_normal,surfaceToLight),0.0);
+  //镜面反射光
+  vec4 specularColor = specular * pointLight* pow(max(dot(a_normal,halfVector),0.0),u_shininess);
+
+
+  //光叠加
+  gl_FragColor = ambientColor + diffuseColor +specularColor;
+}
+  </script>
+
+<script src="./dist/twgl-full.min.js"></script>
+<script src="mutipleModle.js"></script>
+<script src="UI.js"></script>
+
+</html>
